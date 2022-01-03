@@ -1,0 +1,47 @@
+{
+  "name": "strict-mysql",
+  "version": "1.0.0",
+  "description": "query MySQL databases with strict typing in node.js",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf dist && mkdir dist",
+    "compile": "ttsc --build tsconfig.build.json && cp package.json dist/",
+    "distribute": "npm run build && npm publish dist",
+    "test": "npm run test:unit",
+    "test:unit": "cross-env NODE_ENV=test jest -c jest.config.unit.js",
+    "test:integration": "cross-env NODE_ENV=test node ci/integrationTest.js integration",
+    "test:all": "cross-env NODE_ENV=test node ci/integrationTest.js all"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hoopra/strict-mysql.git"
+  },
+  "author": "https://github.com/Hoopra",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Hoopra/strict-mysql/issues"
+  },
+  "homepage": "https://github.com/Hoopra/strict-mysql#readme",
+  "dependencies": {
+    "lodash.zip": "^4.2.0",
+    "mysql2": "2.3.3",
+    "sqlstring": "2.3.2",
+    "ssh2": "1.5.0"
+  },
+  "devDependencies": {
+    "@types/jest": "27.4.0",
+    "@types/lodash.zip": "^4.2.6",
+    "@types/mysql2": "github:types/mysql2",
+    "@types/sqlstring": "2.3.0",
+    "@types/ssh2": "0.5.50",
+    "cross-env": "7.0.3",
+    "jest": "27.4.5",
+    "mysql-schema-ts": "1.8.2",
+    "ts-jest": "27.1.2",
+    "tslib": "2.3.1",
+    "ttypescript": "^1.5",
+    "typescript": "^4.5",
+    "typescript-transform-paths": "^3.3.1"
+  }
+}

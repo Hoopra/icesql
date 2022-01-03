@@ -1,0 +1,29 @@
+name: test
+on:
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - '**.tsx?'
+      - '**.test.ts'
+
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: ${{ secrets.ACTIONS_ALLOW_UNSECURE_COMMANDS }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+
+      - name: run test
+        run: |
+          npm install
+          npm run test

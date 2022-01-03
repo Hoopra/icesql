@@ -1,0 +1,61 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "commonjs",
+    "lib": ["es2017", "esnext"],
+    "esModuleInterop": true,
+
+    "allowJs": false,
+    "checkJs": false,
+
+    "noUncheckedIndexedAccess": true,
+    "strictPropertyInitialization": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "strictNullChecks": true,
+
+    "declaration": true,
+    "sourceMap": true,
+
+    "jsx": "preserve",
+    "outDir": "dist/",
+    "removeComments": true,
+    "noEmit": false,
+    "importHelpers": true,
+    "downlevelIteration": true,
+    "noEmitOnError": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "skipLibCheck": true,
+
+    "types": ["jest", "node"],
+
+    "strict": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@test/*": ["./test/*"]
+    },
+    "plugins": [
+      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
+    ]
+  },
+  "include": ["src/**/*.ts", "src/**/*.json", "test/**/*.ts", "test/**/*.test.ts"],
+  "exclude": ["node_modules"]
+}
