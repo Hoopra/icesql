@@ -1,11 +1,11 @@
-import { where } from '@src/template/mongo/where';
+import { where, wherePart } from '@src/template/mongo/where';
 
 type TestType = { id: number; name: string; created_at: Date };
 
 describe('where', () => {
   it(`should return empty statement if input operator is empty`, () => {
     const statement = where<TestType>({});
-    expect(statement).toEqual({ sql: '', values: [] });
+    expect(statement).toEqual({ sql: '' });
   });
 
   it(`should return input as prepared statement`, () => {
@@ -164,5 +164,12 @@ describe('where', () => {
         $and: [{ id: 123 }, { name: 'name' }],
       })
     ).toThrowError();
+  });
+});
+
+describe('wherePart', () => {
+  it(`should return empty statement if input operator is empty`, () => {
+    expect(wherePart<TestType>()).toEqual({ sql: '' });
+    expect(wherePart<TestType>({})).toEqual({ sql: '' });
   });
 });

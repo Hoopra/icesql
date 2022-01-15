@@ -1,10 +1,17 @@
-import { GenericOptions, Logger } from '@src/connection/types';
 import { Pool, PoolConnection, RowDataPacket, OkPacket, ResultSetHeader } from 'mysql2/promise';
-import { asQuery, deepConvertNullToUndefined } from './util';
-import { BufferOptions, stringifyBufferValues } from './buffer';
-import { log } from './logger';
+
+import { QueryObject, QueryArg, Queryable, QueryOperator } from '@src/model/template';
+import { BufferOptions, GenericOptions, Logger } from '@src/model/connection';
+import { log } from '@src/connection/logger';
+
+import { asQuery, deepConvertNullToUndefined } from '@src/util/convert';
+import { stringifyBufferValues } from '@src/util/buffer';
 import { formatSQL } from '@src/util/format';
-import { Query, QueryObject, QueryArg } from '@src/model/template';
+import { find, insert, remove, update as updateStatement } from '@src/template/mongo';
+
+export type SpecificOperator<T extends Queryable> = { query: QueryOperator<T>; table: string; updated?: Partial<T> };
+
+export type Connector = Connection | Pool | Promise<Connection | Pool>;
 
 const convertNullValuesToUndefined = <T extends Object | Object[]>(entity: T, enabled = false): T => {
   return enabled ? (deepConvertNullToUndefined(entity) as T) : entity;
@@ -12,7 +19,7 @@ const convertNullValuesToUndefined = <T extends Object | Object[]>(entity: T, en
 
 export class Connection {
   conn: Pool | PoolConnection;
-  logger?: Logger | typeof console | undefined;
+  logger?: Logger | typeof console;
 
   public options: GenericOptions;
 
@@ -29,13 +36,15 @@ export class Connection {
    * Use query when doing SELECT. The expected result will be an array of RowDataPacket
    * @param query
    */
-  public async query<T = RowDataPacket>(
-    query: Query | QueryObject | string,
+  public async query<T extends Queryable = RowDataPacket>(
+    operator: QueryObject | string | SpecificOperator<T>,
     bufferOptions: BufferOptions = {}
   ): Promise<T[]> {
-    const [statement, args = []] = asQuery(query);
-    this.logSQL(statement, args);
-    const response = await this.exec(statement, args);
+    const { sql, values } =
+      typeof operator !== 'string' && 'table' in operator ? find(operator.query, operator.table) : asQuery(operator);
+
+    this.logSQL(sql, values);
+    const response = await this.exec(sql, values);
     if (!Array.isArray(response)) {
       throw Error(
         'Return type error. query() should only be used for SELECT. For INSERT, UPDATE, DELETE and SET use execute()'
@@ -46,51 +55,89 @@ export class Connection {
     return convertNullValuesToUndefined<T[]>(unbuffered, Boolean(this.options.nullToUndefined));
   }
 
-  public async queryRequired<T = RowDataPacket>(
-    query: Query | QueryObject | string,
+  public async queryRequired<T extends Queryable = RowDataPacket>(
+    query: QueryObject | string | SpecificOperator<T>,
     errorMessage?: string,
     bufferOptions: BufferOptions = {}
   ): Promise<[T] & T[]> {
     const result = await this.query(query, bufferOptions ?? this.options.buffer);
     if (!result?.length) {
-      throw Error(errorMessage ?? `no results found for query ${JSON.stringify(asQuery(query))}`);
+      throwRequiredError(query, errorMessage);
     }
     return result as [T] & T[];
   }
 
-  public async queryOne<T = RowDataPacket>(
-    query: Query | QueryObject | string,
+  public async queryOne<T extends Queryable = RowDataPacket>(
+    query: QueryObject | string | SpecificOperator<T>,
     bufferOptions: BufferOptions = {}
   ): Promise<T | null> {
     const [result] = await this.query(query, bufferOptions ?? this.options.buffer);
     return result as T;
   }
 
-  public async queryOneRequired<T = RowDataPacket>(
-    query: Query | QueryObject | string,
+  public async queryOneRequired<T extends Queryable = RowDataPacket>(
+    query: QueryObject | string | SpecificOperator<T>,
     errorMessage?: string,
     bufferOptions: BufferOptions = {}
   ): Promise<T> {
     const result = await this.queryOne(query, bufferOptions ?? this.options.buffer);
     if (!result) {
-      throw Error(errorMessage ?? `no results found for query ${JSON.stringify(asQuery(query))}`);
+      throwRequiredError(query, errorMessage);
     }
     return result as T;
   }
 
   /**
-   * Use execute when doing INSERT, UPDATE or DELETE. The expected result will be a ResultSetHeader
-   * @param query
+   * Use this for generic operations.
    */
-  public async execute(query: Query | QueryObject | string): Promise<ResultSetHeader> {
-    const [statement, args = []] = asQuery(query);
-    this.logSQL(statement, args);
-    const response = await this.exec(statement, args);
-    if (Array.isArray(response)) {
-      throw Error(
-        'Return type error. execute() should only be used for INSERT, UPDATE, DELETE and SET. For SELECT use query()'
-      );
-    }
+  public async execute(operator: QueryObject | string): Promise<ResultSetHeader> {
+    const { sql, values } = asQuery(operator);
+
+    this.logSQL(sql, values);
+    const response = await this.exec(sql, values);
+
+    return response as ResultSetHeader;
+  }
+
+  /**
+   * INSERT one or more entries
+   */
+  public async insert<T extends Queryable = RowDataPacket>(object: T | T[], table: string): Promise<ResultSetHeader> {
+    const { sql, values } = insert(object, table);
+
+    this.logSQL(sql, values);
+    const response = await this.exec(sql, values);
+
+    return response as ResultSetHeader;
+  }
+
+  /**
+   * DELETE one or more entries
+   */
+  public async remove<T extends Queryable = RowDataPacket>(
+    operator: QueryObject | string | SpecificOperator<T>
+  ): Promise<ResultSetHeader> {
+    const { sql, values } =
+      typeof operator !== 'string' && 'table' in operator ? remove(operator.query, operator.table) : asQuery(operator);
+
+    this.logSQL(sql, values);
+    const response = await this.exec(sql, values);
+
+    return response as ResultSetHeader;
+  }
+
+  /**
+   * UPDATE one or more entries
+   */
+  public async update<T extends Queryable = RowDataPacket>(
+    operator: Required<SpecificOperator<T>>
+  ): Promise<ResultSetHeader> {
+    const { query, table, updated } = operator;
+    const { sql, values } = updateStatement(query, table, updated);
+
+    this.logSQL(sql, values);
+    const response = await this.exec(sql, values);
+
     return response as ResultSetHeader;
   }
 
@@ -108,7 +155,7 @@ export class Connection {
    */
   public async exec(
     sql: string,
-    args: QueryArg[]
+    args: QueryArg[] = []
   ): Promise<RowDataPacket[] | RowDataPacket[][] | OkPacket | OkPacket[] | ResultSetHeader> {
     try {
       const [response] = await this.conn.execute(sql, args);
@@ -119,7 +166,19 @@ export class Connection {
     }
   }
 
-  private logSQL(sql: string, args: QueryArg[]) {
-    log(this.logger, this.options.logLevel)?.debug?.(formatSQL(sql, args));
+  private logSQL(sql: string, args?: QueryArg[]) {
+    log(this.logger, this.options.logLevel)?.debug?.(formatSQL(sql, args ?? []));
   }
 }
+
+const throwRequiredError = <T extends Queryable = RowDataPacket>(
+  operator: QueryObject | string | SpecificOperator<T>,
+  errorMessage?: string
+) => {
+  if (typeof operator !== 'string' && 'table' in operator) {
+    const { query, table } = operator;
+    throw Error(errorMessage ?? `no results found for query ${JSON.stringify(find(query, table))}`);
+  }
+
+  throw Error(errorMessage ?? `no results found for query ${JSON.stringify(asQuery(operator))}`);
+};

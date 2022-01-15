@@ -1,7 +1,9 @@
-import { Connection } from '@src/connection';
-import { execute } from '@src/connection/init';
+import { Connector, connectToDatabase } from '@src/connection';
+import { execute, insert } from '@src/connection/execute';
 
-export const migrateDatabase = async (connector: Connection) => {
+export type A = { id: number; text: string };
+
+export const migrateDatabase = async (connector: Connector) => {
   await execute(
     `
     CREATE TABLE IF NOT EXISTS a (
@@ -14,5 +16,13 @@ export const migrateDatabase = async (connector: Connection) => {
   await execute(`TRUNCATE TABLE a`, connector);
 };
 
-export const insertSampleEntry = async (connector: Connection) =>
-  await execute(`INSERT INTO a (text) VALUES ("")`, connector);
+export const connector = connectToDatabase({
+  port: 3309,
+  password: 'proot',
+  user: 'root',
+  database: 'database',
+});
+
+export const sampleEntry = { id: 1, text: '' };
+
+export const insertSampleEntry = async (connector: Connector) => await insert({ text: '' }, 'a', connector);

@@ -1,4 +1,4 @@
-import { find, insert, remove, update } from '@src/index';
+import { find, formatParameter, insert, remove, update } from '@src/template';
 
 type TestType = { id: number; name: string; created_at: Date };
 
@@ -7,7 +7,6 @@ describe('find', () => {
     const statement = find<TestType>(undefined, 'user');
     expect(statement).toEqual({
       sql: `SELECT * FROM user`,
-      values: [],
     });
   });
 
@@ -39,7 +38,7 @@ describe('find', () => {
 describe('remove', () => {
   it(`should return basic DELETE statement`, () => {
     const statement = remove<TestType>(undefined, 'user');
-    expect(statement).toEqual({ sql: `DELETE FROM user`, values: [] });
+    expect(statement).toEqual({ sql: `DELETE FROM user` });
   });
 
   it(`should return DELETE statement with WHERE condition`, () => {
@@ -111,5 +110,16 @@ describe('insert', () => {
       sql: `INSERT INTO table (a,b) VALUES (?,?);`,
       values: ['a', 2],
     });
+  });
+});
+
+describe('formatParameter', () => {
+  it(`should return input value for Date object`, () => {
+    const date = new Date(0);
+    expect(formatParameter(date)).toEqual(date);
+  });
+
+  it(`should return stringified value for object`, () => {
+    expect(formatParameter({ hello: 1 })).toBe('{"hello":1}');
   });
 });

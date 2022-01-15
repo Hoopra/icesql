@@ -1,8 +1,4 @@
-type Encoding = 'binary' | 'base64' | 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'latin1' | 'hex';
-export type BufferOptions = {
-  encoding?: Encoding;
-  specific?: Record<string, Encoding>;
-};
+import { BufferOptions } from '@src/model/connection';
 
 export const formatBuffer = (value: any, options: BufferOptions = {}, inputKey?: string) => {
   if (!Buffer.isBuffer(value)) {

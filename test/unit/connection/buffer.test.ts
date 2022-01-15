@@ -1,4 +1,4 @@
-import { formatBuffer, stringifyBufferValues } from '@src/connection/buffer';
+import { formatBuffer, stringifyBufferValues } from '@src/util/buffer';
 
 describe('formatBuffer', () => {
   it(`should return same value if it's not a buffer`, () => {

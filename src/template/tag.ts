@@ -1,6 +1,6 @@
 import zip from 'lodash.zip';
 
-import { SQLTemplate, QueryArg } from '@src/model/template';
+import { QueryObject, QueryArg } from '@src/model/template';
 import { createListOfSqlParams } from '@src/util/format';
 
 const argumentToParameters = (arg: any): string => {
@@ -15,13 +15,13 @@ const argumentToParameters = (arg: any): string => {
   return '?';
 };
 
-export class SQLStatement implements SQLTemplate {
+export class SQLStatement implements QueryObject {
   private statement: string = '';
   private arguments: QueryArg[] = [];
 
   constructor(strings: string[], args: QueryArg[]) {
     this.arguments = (args ?? [])
-      .reduce((acc: QueryArg[], arg) => [...acc, ...(arg instanceof SQLStatement ? arg.values : [arg])], []) // extract and include args from SQLTemplates
+      .reduce((acc: QueryArg[], arg) => [...acc, ...(arg instanceof SQLStatement ? arg.values : [arg])], []) // extract and include args from QueryObjects
       .flat();
 
     if (this.arguments.some(arg => arg === undefined)) {

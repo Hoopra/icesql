@@ -1,7 +1,11 @@
-import { BufferOptions } from './buffer';
+type Encoding = 'binary' | 'base64' | 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'latin1' | 'hex';
+export type BufferOptions = {
+  encoding?: Encoding;
+  specific?: Record<string, Encoding>;
+};
 
 /**
- * Helper types
+ * Auxillary
  */
 export type Beautify<T> = { [K in keyof T]: T[K] };
 type FilterKeys<T> = { [K in keyof T]: T[K][] };
@@ -14,8 +18,14 @@ export type UpdateType<T, AditonalFields extends { [k: string]: any } = {}> = Be
 export type InsertType<T> = Omit<T, 'id'>;
 export type SumFieldType<T, K extends keyof T> = K;
 
+/**
+ * SSH
+ */
 export type SSHConfig = { host: string; port: number; username: string; password: string };
 
+/**
+ * Logger
+ */
 type LogLevel = 'DEBUG' | 'INFO' | 'ERROR';
 
 type LogFunction = (...s: any[]) => void;

@@ -1,54 +1,50 @@
-import { SQLTemplate } from '@src/model/template';
 import { createListOfSqlParams } from '@src/util/format';
-import { OperatorValue, Queryable, TypeWithCompareOperator } from './types';
+import { QueryOperator, Queryable, TypeWithCompareOperator, QueryObject } from '@src/model/template';
 
-export const where = <T extends Queryable>(operatorValue: OperatorValue<T>): SQLTemplate => {
-  if (!Object.keys(operatorValue).length) {
-    return { sql: '', values: [] };
+export const where = <T extends Queryable>(QueryOperator: QueryOperator<T>): QueryObject => {
+  if (!Object.keys(QueryOperator).length) {
+    return { sql: '' };
   }
-  const { sql, values } = wherePart(operatorValue);
+  const { sql, values } = wherePart(QueryOperator);
   return {
-    sql: `WHERE ${sql
-      .trim()
-      .replace(/\s\s+/g, ' ')
-      .replace(/\( /g, '(')}`,
+    sql: `WHERE ${sql.trim().replace(/\s\s+/g, ' ').replace(/\( /g, '(')}`,
     values,
   };
 };
 
-export const wherePart = <T extends Queryable>(operatorValue?: OperatorValue<T>, isInner = false): SQLTemplate => {
-  if (!operatorValue) {
-    return { sql: '', values: [] };
+export const wherePart = <T extends Queryable>(QueryOperator?: QueryOperator<T>, isInner = false): QueryObject => {
+  if (!QueryOperator || !Object.keys(QueryOperator).length) {
+    return { sql: '' };
   }
-  if ('$and' in operatorValue && '$or' in operatorValue) {
+  if ('$and' in QueryOperator && '$or' in QueryOperator) {
     throw Error('cannot construct query containing both AND and OR');
   }
-  if (!('$and' in operatorValue) && !('$or' in operatorValue) && Object.keys(operatorValue).length < 2) {
-    return getFieldQueryPart(operatorValue);
+  if (!('$and' in QueryOperator) && !('$or' in QueryOperator) && Object.keys(QueryOperator).length < 2) {
+    return getFieldQueryPart(QueryOperator);
   }
 
-  const fieldQueries = (operatorValue.$and ??
-    operatorValue.$or ??
-    Object.entries(operatorValue).map(([key, value]) => ({ [key]: value }))) as Array<OperatorValue<T>>;
+  const fieldQueries = (QueryOperator.$and ??
+    QueryOperator.$or ??
+    Object.entries(QueryOperator).map(([key, value]) => ({ [key]: value }))) as Array<QueryOperator<T>>;
 
   const { sql, values } = fieldQueries.reduce(
     (accumulator, current, i) => {
-      const connector = i === 0 ? '' : operatorValue.$or ? 'OR' : 'AND';
+      const connector = i === 0 ? '' : QueryOperator.$or ? 'OR' : 'AND';
       const entry = wherePart(current, true);
       return {
         ...accumulator,
         sql: `${accumulator.sql} ${connector} ${entry.sql}`,
-        values: [...accumulator.values, ...entry.values],
+        values: [...(accumulator.values ?? []), ...(entry.values ?? [])],
       };
     },
-    { sql: '', values: [] } as SQLTemplate
+    { sql: '' } as QueryObject
   );
   return { sql: isInner && !sql.includes('(') ? `(${sql})` : sql, values };
 };
 
 export const getFieldQueryPart = <type extends Queryable>(
   fieldQuery: Partial<TypeWithCompareOperator<type>>
-): SQLTemplate => {
+): QueryObject => {
   const [field] = Object.keys(fieldQuery);
   const queryOperator = Object.values(fieldQuery)[0];
   const operator = queryOperator !== null ? Object.keys(queryOperator)[0] : queryOperator;

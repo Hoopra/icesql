@@ -1,11 +1,11 @@
 version: '2.3'
 services:
-  mysql:
+  database:
     image: mysql:8.0.22
     environment:
       MYSQL_ROOT_PASSWORD: proot
     entrypoint: |
-      sh -c "echo 'CREATE DATABASE IF NOT EXISTS db;' > /docker-entrypoint-initdb.d/init.sql;
+      sh -c "echo 'CREATE DATABASE IF NOT EXISTS `database`;' > /docker-entrypoint-initdb.d/init.sql;
       /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max_allowed_packet=32505856"
     ports:
       - 3309:3306
