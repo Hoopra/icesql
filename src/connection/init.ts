@@ -5,6 +5,14 @@ import { Connection, Connector } from '@src/connection/connection';
 import { log } from '@src/connection/logger';
 import { GenericOptions, SSHConfig } from '@src/model/connection';
 
+let defaultConnection: Connector | undefined = undefined;
+
+export const getDefaultConnection = () => defaultConnection;
+
+export const registerDefaultConnection = (config: PoolOptions, sshConfig?: SSHConfig) => {
+  defaultConnection = connectToDatabase(config, sshConfig);
+};
+
 export const connectToPool = async (
   poolOptions: PoolOptions,
   sshConfig?: SSHConfig,
@@ -61,7 +69,17 @@ export const connectToDatabase = async (config: PoolOptions, sshConfig?: SSHConf
   return await getPool();
 };
 
-export const getConnection = async (connector: Connector, options?: GenericOptions): Promise<Connection> => {
+export const getConnection = async (connector?: Connector, options?: GenericOptions): Promise<Connection> => {
+  if (!connector) {
+    const connection = getDefaultConnection();
+    if (!connection) {
+      throw Error(
+        'no default connection found. Use `registerDefaultConnection` or pass connection to query or exeution function.'
+      );
+    }
+    return getConnection(connection);
+  }
+
   if (connector instanceof Promise) {
     return getConnection(await connector, options);
   }
