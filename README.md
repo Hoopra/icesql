@@ -4,6 +4,8 @@
 
 A library to easily query and manipulate SQL databases.
 
+Currently supports only MySQL, but is a work in progress to support all major types of SQL database.
+
 ## Installation
 
 ### Add package

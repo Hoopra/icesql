@@ -1,7 +1,18 @@
 {
   "name": "icesql",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "query SQL databases with strict typing in Node.js",
+  "keywords": [
+    "mysql",
+    "mongo",
+    "client",
+    "server",
+    "typescript",
+    "type",
+    "safe",
+    "connect",
+    "strict"
+  ],
   "main": "index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
