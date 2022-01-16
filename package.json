@@ -1,12 +1,12 @@
 {
   "name": "icesql",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "query SQL databases with strict typing in Node.js",
   "main": "index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rm -rf dist && mkdir dist",
-    "compile": "ttsc --build tsconfig.build.json && cp package.json dist/ && cp readme.md dist/",
+    "compile": "ttsc --build tsconfig.build.json && cp package.json dist/ && cp README.md dist/",
     "distribute": "npm run build && cd dist && npm publish --access=public",
     "test": "npm run test:unit",
     "test:unit": "cross-env NODE_ENV=test jest -c jest.config.unit.js",
@@ -39,6 +39,7 @@
     "cross-env": "7.0.3",
     "jest": "27.4.7",
     "ts-jest": "27.1.2",
+    "ts-node": "^10.4.0",
     "tslib": "2.3.1",
     "ttypescript": "^1.5",
     "typescript": "^4.5",

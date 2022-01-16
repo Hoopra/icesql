@@ -3,7 +3,6 @@ import { Pool, PoolConnection, RowDataPacket, OkPacket, ResultSetHeader } from '
 import { QueryObject, QueryArg, Queryable, QueryOperator } from '@src/model/template';
 import { BufferOptions, GenericOptions, Logger } from '@src/model/connection';
 import { log } from '@src/connection/logger';
-
 import { asQuery, deepConvertNullToUndefined } from '@src/util/convert';
 import { stringifyBufferValues } from '@src/util/buffer';
 import { formatSQL } from '@src/util/format';

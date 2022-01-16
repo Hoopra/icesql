@@ -2,7 +2,7 @@ name: test
 on:
   pull_request:
     branches:
-      - 'master'
+      - 'main'
     paths:
       - '**.tsx?'
       - '**.test.ts'
@@ -26,4 +26,4 @@ jobs:
       - name: run test
         run: |
           npm install
-          npm run test
+          npm run test:all

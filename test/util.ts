@@ -1,4 +1,5 @@
-import { Connector, connectToDatabase } from '@src/connection';
+import { connectToDatabase } from '@src/connection/init';
+import { Connector } from '@src/connection/connection';
 import { execute, insert } from '@src/connection/execute';
 
 export type A = { id: number; text: string };
@@ -16,12 +17,14 @@ export const migrateDatabase = async (connector: Connector) => {
   await execute(`TRUNCATE TABLE a`, connector);
 };
 
-export const connector = connectToDatabase({
+export const databaseOptions = {
   port: 3309,
   password: 'proot',
   user: 'root',
   database: 'database',
-});
+};
+
+export const connector = connectToDatabase(databaseOptions);
 
 export const sampleEntry = { id: 1, text: '' };
 

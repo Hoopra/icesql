@@ -1,18 +1,17 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 
 import { Queryable, QueryObject } from '@src/model/template';
-import { Connection, Connector, SpecificOperator } from './connection';
 import { GenericOptions } from '@src/model/connection';
-import { getConnection } from './init';
-import { log } from './logger';
-import { find } from '@src/template';
+import { getConnection } from '@src/connection/init';
+import { Connection, Connector, SpecificOperator } from '@src/connection/connection';
+import { log } from '@src/connection/logger';
 
 /**
  * SELECT from database. The expected result will be an array of T (default RowDataPacket)
  */
 export const query = async <T extends Queryable = RowDataPacket>(
   operator: QueryObject | string | SpecificOperator<T>,
-  connector: Connector,
+  connector?: Connector,
   options: GenericOptions = {}
 ): Promise<T[]> => {
   return (await getConnection(connector, options)).query(operator);
@@ -24,7 +23,7 @@ export const query = async <T extends Queryable = RowDataPacket>(
  */
 export const queryRequired = async <T extends Queryable = RowDataPacket>(
   operator: QueryObject | string | SpecificOperator<T>,
-  connector: Connector,
+  connector?: Connector,
   errorMessage?: string,
   options: GenericOptions = {}
 ): Promise<[T] & T[]> => {
@@ -36,7 +35,7 @@ export const queryRequired = async <T extends Queryable = RowDataPacket>(
  */
 export const queryOne = async <T extends Queryable = RowDataPacket>(
   operator: QueryObject | string | SpecificOperator<T>,
-  connector: Connector,
+  connector?: Connector,
   options: GenericOptions = {}
 ): Promise<T | null> => {
   return (await getConnection(connector, options)).queryOne(operator);
@@ -48,7 +47,7 @@ export const queryOne = async <T extends Queryable = RowDataPacket>(
  */
 export const queryOneRequired = async <T extends Queryable = RowDataPacket>(
   query: QueryObject | string | SpecificOperator<T>,
-  connector: Connector,
+  connector?: Connector,
   errorMessage?: string,
   options: GenericOptions = {}
 ): Promise<T> => {
@@ -60,7 +59,7 @@ export const queryOneRequired = async <T extends Queryable = RowDataPacket>(
  */
 export const execute = async (
   query: QueryObject | string,
-  connector: Connector,
+  connector?: Connector,
   options: GenericOptions = {}
 ): Promise<ResultSetHeader> => {
   return (await getConnection(connector, options)).execute(query);
@@ -72,7 +71,7 @@ export const execute = async (
 export const insert = async <T extends Queryable = RowDataPacket>(
   object: T | T[],
   table: string,
-  connector: Connector,
+  connector?: Connector,
   options: GenericOptions = {}
 ): Promise<ResultSetHeader> => (await getConnection(connector, options)).insert(object, table);
 
@@ -81,7 +80,7 @@ export const insert = async <T extends Queryable = RowDataPacket>(
  */
 export const update = async <T extends Queryable = RowDataPacket>(
   query: Required<SpecificOperator<T>>,
-  connector: Connector,
+  connector?: Connector,
   options: GenericOptions = {}
 ): Promise<ResultSetHeader> => (await getConnection(connector, options)).update(query);
 
@@ -90,7 +89,7 @@ export const update = async <T extends Queryable = RowDataPacket>(
  */
 export const remove = async <T extends Queryable = RowDataPacket>(
   query: QueryObject | string | SpecificOperator<T>,
-  connector: Connector,
+  connector?: Connector,
   options: GenericOptions = {}
 ): Promise<ResultSetHeader> => (await getConnection(connector, options)).remove(query);
 

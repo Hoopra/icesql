@@ -19,15 +19,23 @@ yarn add icesql
 ## Usage
 
 ```
-const dbConfig = {
+const databaseConfig = {
   host: "localhost",
   port: 3306,
   database: "database",
   user: "root",
   password: "root"
 };
-const connector = connectToDatabase(dbConfig);
+const connector = connectToDatabase(databaseConfig);
 ```
+
+If you use only one (or a primary) database connection, instead call the following:
+
+```
+registerDefaultConnection(databaseConfig);
+```
+
+You can then omit `connector` from any function call in the following.
 
 ### Query
 
@@ -53,9 +61,16 @@ async function findPeople(): Promise<Person[]> {
 
 ```
 
+If you registered a default connection, use:
+
+```
+const people = await query<Person>({ query: {}, table: 'people' }) // omit `connector`
+return people;
+```
+
 ### Update
 
-`update` returns `ResultSetHeader` from `mysql2`, which is implemented by `icesql`.
+`update` returns `ResultSetHeader` from [mysql2](https://www.npmjs.com/package/mysql2), which is implemented by `icesql`.
 
 ```
 import { update } from 'icesql';
@@ -82,7 +97,7 @@ await updatePerson(1, { name: 'John' });
 ### Delete
 
 _note: should be named 'delete', but that is a reserved word in javascript._
-`remove` returns `ResultSetHeader` from `mysql2`, which is implemented by `icesql`.
+`remove` returns `ResultSetHeader` from [mysql2](https://www.npmjs.com/package/mysql2), which is implemented by `icesql`.
 
 ```
 import { remove } from 'icesql';
@@ -98,7 +113,7 @@ async function deletePerson(id: number) {
 
 ### Execute
 
-All executions return `ResultSetHeader` from `mysql2`, which is implemented by `icesql`.
+All executions return `ResultSetHeader` from [mysql2](https://www.npmjs.com/package/mysql2), which is implemented by `icesql`.
 
 ```
 import { execute } from 'icesql';
