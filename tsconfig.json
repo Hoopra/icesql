@@ -10,7 +10,6 @@
 
     "noUncheckedIndexedAccess": true,
     "strictPropertyInitialization": true,
-    "noPropertyAccessFromIndexSignature": true,
     "strictNullChecks": true,
 
     "declaration": true,
@@ -56,6 +55,6 @@
       { "transform": "typescript-transform-paths", "afterDeclarations": true }
     ]
   },
-  "include": ["src/**/*.ts", "src/**/*.json", "test/**/*.ts", "test/**/*.test.ts"],
+  "include": ["src/**/*.ts", "src/**/*.json", "test/**/*.ts", "test/**/*.test.ts", "ci/**/*.ts"],
   "exclude": ["node_modules"]
 }

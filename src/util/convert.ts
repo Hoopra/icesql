@@ -1,13 +1,9 @@
-import { Primitive, Query, QueryObject, QueryArg } from '@src/model/template';
-
-export const asQuery = (query: Query | QueryObject | string): [string] | [string, QueryArg[]] => {
-  if (typeof query === 'string') {
-    return [query];
-  }
-  return Array.isArray(query) ? (query as Query) : [query.sql, query.values];
-};
+import { Primitive, QueryObject } from '@src/model/template';
 
 type Object = Record<string, any>;
+
+export const asQuery = (query: QueryObject | string): QueryObject =>
+  typeof query === 'string' ? { sql: query } : query;
 
 export const deepConvertNullToUndefined = <T extends Object>(
   object: T | T[] | Primitive | Date | undefined

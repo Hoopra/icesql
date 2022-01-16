@@ -3,10 +3,20 @@ import 'jest';
 
 describe('sql template', () => {
   it(`should return input as prepared statement`, () => {
-    expect({ ...SQL`SELECT * FROM table WHERE id = ${1}` }).toEqual({
+    const statement = SQL`SELECT * FROM table WHERE id = ${1}`;
+
+    expect({ ...statement }).toEqual({
       statement: `SELECT * FROM table WHERE id = ?`,
       arguments: [1],
     });
+    expect(statement.sql).toBe(`SELECT * FROM table WHERE id = ?`);
+    expect(statement.values).toEqual([1]);
+  });
+
+  it(`should allow values to be mutated`, () => {
+    const statement = SQL`SELECT * FROM table WHERE id = ${1}`;
+    statement.values = [2];
+    expect(statement.values).toEqual([2]);
   });
 
   it(`should properly handle array input`, () => {

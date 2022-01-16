@@ -1,48 +1,48 @@
-import { SQLTemplate } from '@src/model/template';
+import { QueryObject } from '@src/model/template';
 import { createListOfSqlParams } from '@src/util/format';
-import { OperatorValue, Queryable, QueryOptions } from './types';
+import { QueryOperator, Queryable, QueryOptions } from '@src/model/template';
 import { where } from './where';
 
 export const find = <T extends Queryable>(
-  operatorValue: OperatorValue<T> = {},
+  QueryOperator: QueryOperator<T> = {},
   tableName: string,
   options: QueryOptions<T> = {}
-): SQLTemplate => {
+): QueryObject => {
   const { $projection } = options;
   const select = `SELECT ${$projection ? $projection.join(', ') : '*'} FROM ${tableName}`;
-  const parsed = parseOptions(operatorValue, options);
+  const parsed = parseOptions(QueryOperator, options);
 
   return { sql: `${select} ${parsed.sql}`.trim(), values: parsed.values };
 };
 
 export const remove = <T extends Queryable>(
-  operatorValue: OperatorValue<T> = {},
+  QueryOperator: QueryOperator<T> = {},
   tableName: string,
   options: QueryOptions<T> = {}
-): SQLTemplate => {
-  const parsed = parseOptions(operatorValue, options);
+): QueryObject => {
+  const parsed = parseOptions(QueryOperator, options);
 
   return { sql: `DELETE FROM ${tableName} ${parsed.sql}`.trim(), values: parsed.values };
 };
 
 export const update = <T extends Queryable>(
-  operatorValue: OperatorValue<T>,
+  QueryOperator: QueryOperator<T>,
   tableName: string,
   update: Partial<T>
-): SQLTemplate => {
+): QueryObject => {
   const statement = `UPDATE ${tableName}`;
   const entries = Object.entries(update).filter(([key, value]) => key !== 'id' && value !== undefined);
   const set = `${entries.map(([key]) => `${key} = ?`).join(', ')}`;
   const values = entries.map(([, value]) => formatParameter(value));
-  const parsed = parseOptions(operatorValue);
+  const parsed = parseOptions(QueryOperator);
 
   return {
     sql: `${statement} SET ${set} ${parsed.sql}`.trim(),
-    values: [...values, ...parsed.values],
+    values: [...values, ...(parsed.values ?? [])],
   };
 };
 
-export const insert = <T extends { [key: string]: any }>(entries: T | T[], tableName: string): SQLTemplate => {
+export const insert = <T extends { [key: string]: any }>(entries: T | T[], tableName: string): QueryObject => {
   if (!Array.isArray(entries)) {
     return insert([entries], tableName);
   }
@@ -72,10 +72,10 @@ const findKeys = <T extends { [key: string]: any }>(entries: T[]): string[] =>
   entries.reduce((allKeys, entry) => Array.from(new Set(allKeys.concat(Object.keys(entry)))), [] as string[]);
 
 const parseOptions = <T extends Queryable>(
-  operatorValue: OperatorValue<T> = {},
+  QueryOperator: QueryOperator<T> = {},
   { $limit, $sort }: QueryOptions<T> = {}
 ) => {
-  const whereCondition = where(operatorValue);
+  const whereCondition = where(QueryOperator);
   const ordering = $sort
     ? ` ORDER BY ${Object.entries($sort)
         .map(([key, value]) => `${key} ${value === 1 ? 'ASC' : 'DESC'}`)
@@ -89,7 +89,7 @@ const parseOptions = <T extends Queryable>(
   };
 };
 
-const formatParameter = (value: unknown): string | number | Date => {
+export const formatParameter = (value: unknown): string | number | Date => {
   switch (typeof value) {
     case 'object':
       return value instanceof Date ? value : JSON.stringify(value);

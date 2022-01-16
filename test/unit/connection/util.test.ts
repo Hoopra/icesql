@@ -1,18 +1,15 @@
-import { asQuery, deepConvertNullToUndefined } from '@src/connection/util';
+import { asQuery, deepConvertNullToUndefined } from '@src/util/convert';
 
 const insertString = 'INSERT INTO a (id) VALUES (?)';
 
 describe('asQuery', () => {
-  it(`should format string as query tuple`, () => {
-    expect(asQuery(insertString)).toEqual([insertString]);
+  it(`should format string as query object`, () => {
+    expect(asQuery(insertString)).toEqual({ sql: insertString });
   });
 
-  it(`should format query object as query tuple`, () => {
-    expect(asQuery({ sql: insertString, values: ['b'] })).toEqual([insertString, ['b']]);
-  });
-
-  it(`should return query tuple as is`, () => {
-    expect(asQuery([insertString, ['b']])).toEqual([insertString, ['b']]);
+  it(`should return input for query object`, () => {
+    const query = { sql: insertString, values: ['b'] };
+    expect(asQuery(query)).toEqual(query);
   });
 });
 

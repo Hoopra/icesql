@@ -1,9 +1,9 @@
 import { Client } from 'ssh2';
-import { createPool, Pool, PoolOptions, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { Connection } from './connection';
-import { GenericOptions, SSHConfig } from './types';
-import { log } from './logger';
-import { Query, QueryObject } from '@src/model/template';
+import { createPool, Pool, PoolOptions } from 'mysql2/promise';
+
+import { Connection, Connector } from '@src/connection/connection';
+import { log } from '@src/connection/logger';
+import { GenericOptions, SSHConfig } from '@src/model/connection';
 
 export const connectToPool = async (
   poolOptions: PoolOptions,
@@ -61,110 +61,12 @@ export const connectToDatabase = async (config: PoolOptions, sshConfig?: SSHConf
   return await getPool();
 };
 
-const getConnection = async (
-  connector: Connection | Pool | Promise<Connection | Pool>,
-  options?: GenericOptions
-): Promise<Connection> => {
+export const getConnection = async (connector: Connector, options?: GenericOptions): Promise<Connection> => {
   if (connector instanceof Promise) {
-    return getConnection(await connector);
+    return getConnection(await connector, options);
   }
   if (connector instanceof Connection) {
     return connector;
   }
   return new Connection(connector);
-};
-
-/**
- * SELECT from database. The expected result will be an array of T (default RowDataPacket)
- * @param query
- * @param connection
- */
-export const query = async <T extends { [key: string]: any } = RowDataPacket>(
-  query: Query | QueryObject | string,
-  connector: Connection | Pool | Promise<Connection | Pool>,
-  options: GenericOptions = {}
-): Promise<T[]> => (await getConnection(connector, options)).query(query);
-
-/**
- * SELECT from database. The expected result will be an array of T (default RowDataPacket).
- * Errors if no results are found.
- * @param query
- * @param connection
- */
-export const queryRequired = async <T extends { [key: string]: any } = RowDataPacket>(
-  query: Query | QueryObject | string,
-  connector: Connection | Pool | Promise<Connection | Pool>,
-  errorMessage?: string,
-  options: GenericOptions = {}
-): Promise<[T] & T[]> => (await getConnection(connector, options)).queryRequired(query, errorMessage);
-
-/**
- * SELECT one entity from database. The expected result will be an array of T (default RowDataPacket).
- * @param query
- * @param connection
- */
-export const queryOne = async <T extends { [key: string]: any } = RowDataPacket>(
-  query: Query | QueryObject | string,
-  connector: Connection | Pool | Promise<Connection | Pool>,
-  options: GenericOptions = {}
-): Promise<T | null> => {
-  return await (await getConnection(connector, options)).queryOne<T>(query);
-};
-
-/**
- * SELECT one entity from database. The expected result will be an array of T (default RowDataPacket).
- * Errors if no results are found.
- * @param query
- * @param connection
- */
-export const queryOneRequired = async <T extends { [key: string]: any } = RowDataPacket>(
-  query: Query | QueryObject | string,
-  connector: Connection | Pool | Promise<Connection | Pool>,
-  errorMessage?: string,
-  options: GenericOptions = {}
-): Promise<T> => {
-  return (await getConnection(connector, options)).queryOneRequired<T>(query, errorMessage);
-};
-
-/**
- * Use execute when doing INSERT, UPDATE, DELETE or SET. The expected result will be a ResultSetHeader
- * @param query
- * @param connection
- */
-export const execute = async (
-  query: Query | QueryObject | string,
-  connector: Connection | Pool | Promise<Connection | Pool>,
-  options: GenericOptions = {}
-): Promise<ResultSetHeader> => (await getConnection(connector, options)).execute(query);
-
-/**
- * Starts or continues a transaction. Automatically rolls back changes if an error occurs.
- * @param func method to run during transaction
- * @param transActionConnection active transaction connection to use
- */
-export const transaction = async <T>(
-  func: (conn: Connection) => Promise<T>,
-  c: Connection | Pool | Promise<Connection | Pool>,
-  { logLevel, nullToUndefined }: GenericOptions = {}
-): Promise<T> => {
-  if (c instanceof Promise) {
-    return await transaction(func, await c);
-  }
-  if (c instanceof Connection) {
-    return func(await getConnection(c, { logLevel }));
-  }
-  const conn = await c.getConnection();
-  await conn.beginTransaction();
-  const connection = new Connection(conn, { logLevel, nullToUndefined });
-  try {
-    const funcReturn = await func(connection);
-    await conn.commit();
-    return funcReturn;
-  } catch (err) {
-    log(connection.options.logger, connection.options.logLevel)?.error(err);
-    await conn.rollback();
-    throw err;
-  } finally {
-    conn.release();
-  }
 };
