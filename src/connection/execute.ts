@@ -103,18 +103,24 @@ export const remove = async <T extends Queryable = RowDataPacket>(
  */
 export const transaction = async <T>(
   func: (conn: Connection) => Promise<T>,
-  c: Connector,
+  c?: Connector,
   { logLevel, nullToUndefined }: GenericOptions = {}
 ): Promise<T> => {
+  if (!c) {
+    return transaction(func, await getConnection(c));
+  }
+
   if (c instanceof Promise) {
     return await transaction(func, await c);
   }
   if (c instanceof Connection) {
     return func(await getConnection(c, { logLevel }));
   }
-  const conn = await c.getConnection();
+
+  const conn = await c?.getConnection();
   await conn.beginTransaction();
   const connection = new Connection(conn, { logLevel, nullToUndefined });
+
   try {
     const funcReturn = await func(connection);
     await conn.commit();
