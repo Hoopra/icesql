@@ -1,4 +1,4 @@
-import { query, transaction } from '@src/connection';
+import { select, transaction } from '@src/connection';
 import { connector, insertSampleEntry, migrateDatabase, sampleEntry } from '@test/util';
 
 beforeEach(async () => {
@@ -11,7 +11,7 @@ describe('transaction', () => {
       await insertSampleEntry(conn);
       await conn.execute(`DELETE FROM a`);
     }, connector);
-    expect(await query(`SELECT * FROM a`, connector)).toEqual([]);
+    expect(await select(`SELECT * FROM a`, connector)).toEqual([]);
   });
 
   it(`should roll back if an error occurs`, async () => {
@@ -22,7 +22,7 @@ describe('transaction', () => {
         throw Error();
       }, connector);
     } catch (error) {}
-    expect(await query(`SELECT * FROM a`, connector)).toEqual([sampleEntry]);
+    expect(await select(`SELECT * FROM a`, connector)).toEqual([sampleEntry]);
   });
 
   it(`should concatenate multiple transactions in succession`, async () => {
@@ -33,6 +33,6 @@ describe('transaction', () => {
         await insertSampleEntry(conn2);
       }, conn1);
     }, connector);
-    expect(await query(`SELECT * FROM a`, connector)).toEqual([{ ...sampleEntry, id: 2 }]);
+    expect(await select(`SELECT * FROM a`, connector)).toEqual([{ ...sampleEntry, id: 2 }]);
   });
 });
