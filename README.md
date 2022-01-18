@@ -96,6 +96,33 @@ await updatePerson(1, { name: 'John' });
 
 ```
 
+### Insert
+
+`insert` returns `ResultSetHeader` from [mysql2](https://www.npmjs.com/package/mysql2), which is implemented by `icesql`.
+
+```
+import { insert } from 'icesql';
+
+...
+
+async function insertPerson(person: Person) {
+  const result = await insert(
+    { object: person, table: 'people' },
+    connector
+  );
+  return result;
+}
+
+async function insertPeople(people: Person[]) {
+  const result = await insert(
+    { object: people, table: 'people' },
+    connector
+  );
+  return result;
+}
+
+```
+
 ### Delete
 
 _note: should be named 'delete', but that is a reserved word in javascript._

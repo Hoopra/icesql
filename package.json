@@ -1,6 +1,6 @@
 {
   "name": "icesql",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "query SQL databases with strict typing in Node.js",
   "keywords": [
     "mysql",
