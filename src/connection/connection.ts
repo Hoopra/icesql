@@ -10,6 +10,8 @@ import { find, insert, remove, update as updateStatement } from '@src/template/m
 
 export type SpecificOperator<T extends Queryable> = { query: QueryOperator<T>; table: string; updated?: Partial<T> };
 
+export type InsertOperator<T extends Queryable> = { object: T | T[]; table: string };
+
 export type Connector = Connection | Pool | Promise<Connection | Pool>;
 
 const convertNullValuesToUndefined = <T extends Object | Object[]>(entity: T, enabled = false): T => {
@@ -32,8 +34,7 @@ export class Connection {
   }
 
   /**
-   * Use query when doing SELECT. The expected result will be an array of RowDataPacket
-   * @param query
+   * SELECT rows from database.
    */
   public async query<T extends Queryable = RowDataPacket>(
     operator: QueryObject | string | SpecificOperator<T>,
@@ -54,6 +55,10 @@ export class Connection {
     return convertNullValuesToUndefined<T[]>(unbuffered, Boolean(this.options.nullToUndefined));
   }
 
+  /**
+   * SELECT rows from database.
+   * Errors if no results are found.
+   */
   public async queryRequired<T extends Queryable = RowDataPacket>(
     query: QueryObject | string | SpecificOperator<T>,
     errorMessage?: string,
@@ -66,6 +71,9 @@ export class Connection {
     return result as [T] & T[];
   }
 
+  /**
+   * SELECT one row from database.
+   */
   public async queryOne<T extends Queryable = RowDataPacket>(
     query: QueryObject | string | SpecificOperator<T>,
     bufferOptions: BufferOptions = {}
@@ -74,6 +82,10 @@ export class Connection {
     return result as T;
   }
 
+  /**
+   * SELECT one row from database.
+   * Errors if no results are found.
+   */
   public async queryOneRequired<T extends Queryable = RowDataPacket>(
     query: QueryObject | string | SpecificOperator<T>,
     errorMessage?: string,
@@ -87,7 +99,7 @@ export class Connection {
   }
 
   /**
-   * Use this for generic operations.
+   * Execute generic operation.
    */
   public async execute(operator: QueryObject | string): Promise<ResultSetHeader> {
     const { sql, values } = asQuery(operator);
@@ -99,9 +111,12 @@ export class Connection {
   }
 
   /**
-   * INSERT one or more entries
+   * INSERT one or more entries.
    */
-  public async insert<T extends Queryable = RowDataPacket>(object: T | T[], table: string): Promise<ResultSetHeader> {
+  public async insert<T extends Queryable = RowDataPacket>({
+    object,
+    table,
+  }: InsertOperator<T>): Promise<ResultSetHeader> {
     const { sql, values } = insert(object, table);
 
     this.logSQL(sql, values);
@@ -111,13 +126,13 @@ export class Connection {
   }
 
   /**
-   * DELETE one or more entries
+   * UPDATE one or more entries.
    */
-  public async remove<T extends Queryable = RowDataPacket>(
-    operator: QueryObject | string | SpecificOperator<T>
+  public async update<T extends Queryable = RowDataPacket>(
+    operator: Required<SpecificOperator<T>>
   ): Promise<ResultSetHeader> {
-    const { sql, values } =
-      typeof operator !== 'string' && 'table' in operator ? remove(operator.query, operator.table) : asQuery(operator);
+    const { query, table, updated } = operator;
+    const { sql, values } = updateStatement(query, table, updated);
 
     this.logSQL(sql, values);
     const response = await this.exec(sql, values);
@@ -126,13 +141,13 @@ export class Connection {
   }
 
   /**
-   * UPDATE one or more entries
+   * DELETE one or more entries.
    */
-  public async update<T extends Queryable = RowDataPacket>(
-    operator: Required<SpecificOperator<T>>
+  public async remove<T extends Queryable = RowDataPacket>(
+    operator: QueryObject | string | SpecificOperator<T>
   ): Promise<ResultSetHeader> {
-    const { query, table, updated } = operator;
-    const { sql, values } = updateStatement(query, table, updated);
+    const { sql, values } =
+      typeof operator !== 'string' && 'table' in operator ? remove(operator.query, operator.table) : asQuery(operator);
 
     this.logSQL(sql, values);
     const response = await this.exec(sql, values);

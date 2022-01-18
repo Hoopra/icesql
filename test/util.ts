@@ -28,4 +28,5 @@ export const connector = connectToDatabase(databaseOptions);
 
 export const sampleEntry = { id: 1, text: '' };
 
-export const insertSampleEntry = async (connector: Connector) => await insert({ text: '' }, 'a', connector);
+export const insertSampleEntry = async (connector: Connector) =>
+  await insert({ object: { text: '' }, table: 'a' }, connector);

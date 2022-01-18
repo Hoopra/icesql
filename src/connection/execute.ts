@@ -3,13 +3,13 @@ import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { Queryable, QueryObject } from '@src/model/template';
 import { GenericOptions } from '@src/model/connection';
 import { getConnection } from '@src/connection/init';
-import { Connection, Connector, SpecificOperator } from '@src/connection/connection';
+import { Connection, Connector, InsertOperator, SpecificOperator } from '@src/connection/connection';
 import { log } from '@src/connection/logger';
 
 /**
- * SELECT from database. The expected result will be an array of T (default RowDataPacket)
+ * SELECT rows from database.
  */
-export const query = async <T extends Queryable = RowDataPacket>(
+export const select = async <T extends Queryable = RowDataPacket>(
   operator: QueryObject | string | SpecificOperator<T>,
   connector?: Connector,
   options: GenericOptions = {}
@@ -18,10 +18,10 @@ export const query = async <T extends Queryable = RowDataPacket>(
 };
 
 /**
- * SELECT from database. The expected result will be an array of T (default RowDataPacket).
+ * SELECT rows from database.
  * Errors if no results are found.
  */
-export const queryRequired = async <T extends Queryable = RowDataPacket>(
+export const selectRequired = async <T extends Queryable = RowDataPacket>(
   operator: QueryObject | string | SpecificOperator<T>,
   connector?: Connector,
   errorMessage?: string,
@@ -31,9 +31,9 @@ export const queryRequired = async <T extends Queryable = RowDataPacket>(
 };
 
 /**
- * SELECT one entity from database. The expected result will be an array of T (default RowDataPacket).
+ * SELECT one row from database.
  */
-export const queryOne = async <T extends Queryable = RowDataPacket>(
+export const selectOne = async <T extends Queryable = RowDataPacket>(
   operator: QueryObject | string | SpecificOperator<T>,
   connector?: Connector,
   options: GenericOptions = {}
@@ -42,10 +42,10 @@ export const queryOne = async <T extends Queryable = RowDataPacket>(
 };
 
 /**
- * SELECT one entity from database. The expected result will be an array of T (default RowDataPacket).
+ * SELECT one row from database.
  * Errors if no results are found.
  */
-export const queryOneRequired = async <T extends Queryable = RowDataPacket>(
+export const selectOneRequired = async <T extends Queryable = RowDataPacket>(
   query: QueryObject | string | SpecificOperator<T>,
   connector?: Connector,
   errorMessage?: string,
@@ -55,7 +55,7 @@ export const queryOneRequired = async <T extends Queryable = RowDataPacket>(
 };
 
 /**
- * Use this for generic operations.
+ * Execute generic operation.
  */
 export const execute = async (
   query: QueryObject | string,
@@ -66,17 +66,22 @@ export const execute = async (
 };
 
 /**
- * INSERT one or more entries
+ * INSERT one or more entries.
  */
 export const insert = async <T extends Queryable = RowDataPacket>(
-  object: T | T[],
-  table: string,
+  operator: InsertOperator<T>,
   connector?: Connector,
   options: GenericOptions = {}
-): Promise<ResultSetHeader> => (await getConnection(connector, options)).insert(object, table);
+): Promise<ResultSetHeader> => {
+  if (Array.isArray(operator.object) && !operator.object.length) {
+    throw Error('no objects to insert');
+  }
+
+  return (await getConnection(connector, options)).insert(operator);
+};
 
 /**
- * UPDATE one or more entries
+ * UPDATE one or more entries.
  */
 export const update = async <T extends Queryable = RowDataPacket>(
   query: Required<SpecificOperator<T>>,
@@ -85,7 +90,7 @@ export const update = async <T extends Queryable = RowDataPacket>(
 ): Promise<ResultSetHeader> => (await getConnection(connector, options)).update(query);
 
 /**
- * INSERT one or more entries
+ * DELETE one or more entries.
  */
 export const remove = async <T extends Queryable = RowDataPacket>(
   query: QueryObject | string | SpecificOperator<T>,
