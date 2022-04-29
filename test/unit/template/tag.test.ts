@@ -26,6 +26,13 @@ describe('sql template', () => {
     });
   });
 
+  it(`should properly handle null input`, () => {
+    expect({ ...SQL`UPDATE table SET name = ${null} WHERE id IN (${[1, 2, 3, 4]}) AND name = ${'hello'}` }).toEqual({
+      statement: `UPDATE table SET name = NULL WHERE id IN (?,?,?,?) AND name = ?`,
+      arguments: [1, 2, 3, 4, 'hello'],
+    });
+  });
+
   it(`should properly handle date input`, () => {
     const date = new Date(0);
     expect({ ...SQL`SELECT * FROM table WHERE created_at = ${date}` }).toEqual({
@@ -52,8 +59,8 @@ describe('sql template', () => {
 
   it(`should handle nulls in args`, () => {
     expect({ ...SQL`INSERT INTO table SET value = ${null}` }).toEqual({
-      statement: `INSERT INTO table SET value = ?`,
-      arguments: [null],
+      statement: `INSERT INTO table SET value = NULL`,
+      arguments: [],
     });
   });
 

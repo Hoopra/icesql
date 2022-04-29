@@ -61,12 +61,12 @@ describe('update', () => {
     });
   });
 
-  it(`should return DELETE statement with WHERE condition`, () => {
-    const now = new Date();
-    const statement = remove<TestType>({ name: 'name', created_at: { $gt: now } }, 'user');
+  it(`should return UPDATE statement that can set value to 'NULL'`, () => {
+    const statement = update<TestType>({ id: 123 }, 'user', { name: null });
+    expect(statement.sql).toBe('UPDATE user SET name = NULL WHERE id = ?');
     expect(statement).toEqual({
-      sql: `DELETE FROM user WHERE name = ? AND created_at > ?`,
-      values: ['name', now],
+      sql: `UPDATE user SET name = NULL WHERE id = ?`,
+      values: [123],
     });
   });
 });

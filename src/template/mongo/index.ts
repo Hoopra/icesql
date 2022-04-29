@@ -2,6 +2,7 @@ import { QueryObject } from '@src/model/template';
 import { createListOfSqlParams } from '@src/util/format';
 import { QueryOperator, Queryable, QueryOptions } from '@src/model/template';
 import { where } from './where';
+import { filterAndMap } from '@src/util/object';
 
 export const find = <T extends Queryable>(
   QueryOperator: QueryOperator<T> = {},
@@ -28,12 +29,17 @@ export const remove = <T extends Queryable>(
 export const update = <T extends Queryable>(
   QueryOperator: QueryOperator<T>,
   tableName: string,
-  update: Partial<T>
+  update: Partial<{ [K in keyof T]: T[K] | null }>
 ): QueryObject => {
   const statement = `UPDATE ${tableName}`;
   const entries = Object.entries(update).filter(([key, value]) => key !== 'id' && value !== undefined);
-  const set = `${entries.map(([key]) => `${key} = ?`).join(', ')}`;
-  const values = entries.map(([, value]) => formatParameter(value));
+  const set = `${entries.map(([key, value]) => `${key} = ${value === null ? 'NULL' : '?'}`).join(', ')}`;
+
+  const values = filterAndMap(
+    entries,
+    ([, value]) => value !== null,
+    ([, value]) => formatParameter(value)
+  );
   const parsed = parseOptions(QueryOperator);
 
   return {
