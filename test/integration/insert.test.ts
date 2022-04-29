@@ -1,5 +1,5 @@
 import { select, insert } from '@src/connection';
-import { A, connector, insertSampleEntry, migrateDatabase } from '@test/util';
+import { connector, migrateDatabase } from '@test/util';
 
 beforeEach(async () => {
   await migrateDatabase(connector);

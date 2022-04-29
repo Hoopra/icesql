@@ -8,7 +8,11 @@ import { stringifyBufferValues } from '@src/util/buffer';
 import { formatSQL } from '@src/util/format';
 import { find, insert, remove, update as updateStatement } from '@src/template/mongo';
 
-export type SpecificOperator<T extends Queryable> = { query: QueryOperator<T>; table: string; updated?: Partial<T> };
+export type SpecificOperator<T extends Queryable> = {
+  query: QueryOperator<T>;
+  table: string;
+  updated?: Partial<{ [K in keyof T]: T[K] | null }>;
+};
 
 export type InsertOperator<T extends Queryable> = { object: T | T[]; table: string };
 
