@@ -1,4 +1,5 @@
 import { formatSQL, createListOfSqlParams } from '@src/util/format';
+import { filterAndMap } from '@src/util/object';
 
 const queryString = 'SELECT * FROM a';
 
@@ -27,5 +28,21 @@ describe('createListOfSqlParams', () => {
 
   it(`should return a number of '?' characters`, () => {
     expect(createListOfSqlParams(5)).toBe('?,?,?,?,?');
+  });
+});
+
+describe('filterAndMap', () => {
+  it('should filter and map array in one iteration', () => {
+    const entries = [
+      { key: 'a', value: 'b' },
+      { key: 'c', value: 'h' },
+    ];
+
+    const result = filterAndMap(
+      entries,
+      ({ key }) => key !== 'a',
+      ({ value }) => value
+    );
+    expect(result).toEqual(['h']);
   });
 });

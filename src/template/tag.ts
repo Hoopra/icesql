@@ -8,6 +8,10 @@ const argumentToParameters = (arg: any): string => {
     return '';
   }
 
+  if (arg === null) {
+    return 'NULL';
+  }
+
   if (Array.isArray(arg)) {
     return `${createListOfSqlParams(arg.length)}`;
   }
@@ -21,7 +25,11 @@ export class SQLStatement implements QueryObject {
 
   constructor(strings: string[], args: QueryArg[]) {
     this.arguments = (args ?? [])
-      .reduce((acc: QueryArg[], arg) => [...acc, ...(arg instanceof SQLStatement ? arg.values : [arg])], []) // extract and include args from QueryObjects
+      // extract and include args from QueryObjects
+      .reduce(
+        (acc: QueryArg[], arg) => [...acc, ...(arg instanceof SQLStatement ? arg.values : arg === null ? [] : [arg])],
+        []
+      )
       .flat();
 
     if (this.arguments.some(arg => arg === undefined)) {
